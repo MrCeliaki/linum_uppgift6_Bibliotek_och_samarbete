@@ -5,7 +5,7 @@
 
 int main()
 {
-    printf("Hello Lib World!");
+    printf("success\n");
 
     float *array;
     calc_resistance(0,0,array);
