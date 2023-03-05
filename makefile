@@ -1,21 +1,33 @@
 CC=gcc
-LIBS= component.o resistance.o power.o
+OBJS= component.o resistance.o power.o main.o
+LIBS= libcomponent.so libresistance.so libpower.so
 
-# all, För att bygga både programmet och biblioteken där biblioteken läggs i en egen katalog, lib,  under den man är jus nu, tex /home/bl/electro/lib/. Här ska programmet länkas för att använda de lokala biblioteken. OBS! Ni får inte temporärt ändra libsökvägarna i LD_LIBRARY_PATH!
 all: lib eletrotest
 
-# lib, för att bygga enbart biblioteken.
-lib: $(LIBS)
-	$(CC) -shared -fPIC -o libcomponent.so component.o
-	$(CC) -shared -fPIC -o libresistance.so resistance.o
-	$(CC) -shared -fPIC -o libpower.so power.o
+lib: $(OBJS) $(LIBS)
 
-# install. Här kopierar du både programmet och biblioteken till lämpliga kataloger (tex /usr/bin/ och /usr/lib/) och länkar så att programmet använder de publika biblioteken.
-install:
+install: lib eletrotest
+	sudo cp eletrotest /usr/bin
 
-#clean. För att städa bort objekt- och exekverbara filer.
+uninstall:
+	sudo rm /usr/lib/libcomponent.so 
+	sudo rm /usr/lib/libresistance.so 
+	sudo rm /usr/lib/libpower.so 
+	sudo rm /usr/bin/eletrotest
+
 clean:
 	rm -v *.o *.so eletrotest
 
-eletrotest:
-	$(CC) -o $@ main.c -L. -lpower -lresistance -lcomponen -Wl,-rpath,.
+eletrotest: install_libs
+	$(CC) -o $@ main.c -Wl,-rpath,/usr/lib -L/usr/lib -lpower -lresistance -lcomponent 
+
+install_libs: lib
+	sudo cp libcomponent.so /usr/lib
+	sudo cp libresistance.so /usr/lib
+	sudo cp libpower.so /usr/lib
+
+%.o: %.c %.h
+	$(CC) -c $< -o $@
+
+lib%.so: %.o
+	$(CC) -shared -fPIC -o $@ $< 
